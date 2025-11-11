@@ -1,25 +1,53 @@
 import prisma from "@/lib/db";
 import { inngest } from "./client";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { generateText } from "ai";
 
-export const helloWorld = inngest.createFunction(
-  { id: "hello-world", retries: 3 },
-  { event: "test/hello.world" },
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+});
+
+export const generativeText = inngest.createFunction(
+  { id: "generate-text", retries: 3 },
+  { event: "ai/generate-text" },
   async ({ event, step }) => {
-    //Fetching the video
-    await step.sleep("fetching", "2s");
+    const { userPrompt } = event.data as { userPrompt: string };
 
-    //Transcribing
-    await step.sleep("Transcribing", "2s");
+    if (!userPrompt || userPrompt.trim().length === 0) {
+      throw new Error("User prompt cannot be empty");
+    }
 
-    //Sending transcription to AI
-    await step.sleep("sending to ai", "2s");
+    try {
+      // Generate text using Google's Gemini model
+      const { text } = await step.ai.wrap(
+        "gemini-generate-text",
+        generateText,
+        {
+          model: google("gemini-2.5-flash"),
+          system: `You are a helpful AI assistant. Provide clear, concise, and accurate responses.
+        
+Guidelines:
+- Be professional and friendly
+- Structure your response clearly
+- Provide examples when helpful
+- Ask clarifying questions if needed`,
+          prompt: userPrompt,
+        }
+      );
 
-    await step.run("create-workflow",async () => {
-        return await prisma.workflow.create({
-            data: {
-                name: "workflow-from-inngest",
-            }
-        })
-    })
+      console.log(
+        "Generated text successfully:",
+        text.substring(0, 100) + "..."
+      );
+
+      return {
+        success: true,
+        generatedText: text,
+        tokenCount: text.split(" ").length,
+      };
+    } catch (error) {
+      console.error("Failed to generate text:", error);
+      throw error;
+    }
   }
 );
