@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { baseProcedure, createTRPCRouter, protectedProcedure } from '../init';
-import prisma from '@/lib/db';
+import { createTRPCRouter, protectedProcedure } from '../init';
 import { inngest } from '@/inngest/client';
 
 export const appRouter = createTRPCRouter({
