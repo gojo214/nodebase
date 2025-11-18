@@ -2,48 +2,45 @@ import prisma from "@/lib/db";
 import { inngest } from "./client";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateText } from "ai";
+import * as Sentry from "@sentry/nextjs";
 
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 });
 
-export const generativeText = inngest.createFunction(
-  { id: "generate-text", retries: 3 },
-  { event: "ai/generate-text" },
-  async ({ event, step }) => {
-    const { userPrompt } = event.data as { userPrompt: string };
-
-    if (!userPrompt || userPrompt.trim().length === 0) {
-      throw new Error("User prompt cannot be empty");
-    }
-
+export const helloWorld = inngest.createFunction(
+  { id: "execute-ai", retries: 3 },
+  { event: "execute/ai" },
+  async ({ step }) => {
+    Sentry.logger.info("User triggered test log", { log_source: "Sentry_test" })
     try {
       // Generate text using Google's Gemini model
-      const { text } = await step.ai.wrap(
+      const { steps } = await step.ai.wrap(
         "gemini-generate-text",
         generateText,
         {
           model: google("gemini-2.5-flash"),
           system: `You are a helpful AI assistant. Provide clear, concise, and accurate responses.
         
-Guidelines:
-- Be professional and friendly
-- Structure your response clearly
-- Provide examples when helpful
-- Ask clarifying questions if needed`,
-          prompt: userPrompt,
+            Guidelines:
+            - Be professional and friendly
+            - Structure your response clearly
+            - Provide examples when helpful
+            - Ask clarifying questions if needed`,
+          prompt: "what is 2 + 2?",
+          experimental_telemetry: {
+            isEnabled: true,
+            recordInputs: true,
+            recordOutputs: true,
+          },
         }
       );
 
-      console.log(
-        "Generated text successfully:",
-        text.substring(0, 100) + "..."
-      );
+      console.log("Generated text successfully:", steps);
 
       return {
         success: true,
-        generatedText: text,
-        tokenCount: text.split(" ").length,
+        steps,
       };
     } catch (error) {
       console.error("Failed to generate text:", error);
