@@ -24,7 +24,7 @@ export const helloWorld = inngest.createFunction(
         
             Guidelines:
             - Be professional and friendly
-            - Structure your response clearly
+            - Structure your response clearly 
             - Provide examples when helpful
             - Ask clarifying questions if needed`,
           prompt: "what is 2 + 2?",
