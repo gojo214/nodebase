@@ -10,21 +10,21 @@ export default function Home() {
   const trpc = useTRPC();
   const [message, setMessage] = useState<String>("");
   const testAi = useMutation(
-    trpc.generateText.mutationOptions({
-      onSuccess: ({ message, }) => {
-        setMessage(message);
-        toast.success("AI job queued");
+    trpc.testAi.mutationOptions({
+      onSuccess: ({ message }) => {
+        toast.success("AI job queued successfully!");
+        setMessage(message)
       },
+      onError: () => {
+        toast.error("Failed to queue AI job.");
+      }
     })
   );
   return (
     <div className="min-h-screen min-w-screen flex items-center justify-center flex-col gap-y-6">
-      <div>{JSON.stringify(message, null, 2)}</div>
+      <div>{JSON.stringify(message)}</div>
 
-      <Button
-        disabled={testAi.isPending}
-        onClick={() => testAi.mutate({ prompt: "what is 2+2?" })}
-      >
+      <Button disabled={testAi.isPending} onClick={() => testAi.mutate()}>
         test AI
       </Button>
     </div>
