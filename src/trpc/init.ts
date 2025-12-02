@@ -50,7 +50,7 @@ export const premiumProcedure = protectedProcedure.use(async ({ ctx, next })  =>
 
   if (!premium.activeSubscriptions || premium.activeSubscriptions.length === 0) {
     throw new TRPCError({
-      code: "PAYMENT_REQUIRED",
+      code: "FORBIDDEN",
       message: "You need an active subscription to access this feature",
     })
   }
